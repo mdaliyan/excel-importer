@@ -1,0 +1,151 @@
+version: '2'
+
+
+networks:
+  simplenet:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        -
+          subnet: '172.25.0.0/16'
+
+volumes:
+  logs-storage:
+  elastic-storage:
+  kibana-storage:
+  influxdb-storage:
+  chronograf-storage:
+  grafana-storage:
+
+    
+#  docker network create simplenet
+services:
+
+  importer:
+    container_name: importer
+    image: importer
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    # ports:
+    #     - 8443:4040
+    depends_on:
+      - elasticsearch
+      - influxdb
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "4"
+    networks:
+      simplenet:
+        ipv4_address: 172.25.0.6
+
+
+  elasticsearch:
+    container_name: elasticsearch
+    image: 'docker.elastic.co/elasticsearch/elasticsearch:7.4.1'
+    ports:
+      - 9200:9200
+      - 9300:9300
+    networks:
+      simplenet:
+        ipv4_address: 172.25.0.5
+    environment:
+      - node.name=elasticsearch
+      - cluster.name=docker-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms256M -Xmx256M"
+      - http.cors.enabled=true
+      - http.cors.allow-origin=*
+      - network.host=_eth0_
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.monitoring.enabled=false
+      - xpack.watcher.enabled=false
+    ulimits:
+      nproc: 65535
+      memlock:
+        soft: -1
+        hard: -1
+    cap_add:
+      - ALL
+    volumes:
+      - logs-storage:/var/log
+      - elastic-storage:/usr/share/elasticsearch/data
+
+
+
+  kibana:
+    container_name: kibana
+    image: 'docker.elastic.co/kibana/kibana:7.4.1'
+    ports:
+      - 5601:5601
+    networks:
+      simplenet:
+        ipv4_address: 172.25.0.2
+    volumes:
+        - logs-storage:/var/log
+    depends_on:
+      - elasticsearch
+    environment:
+      SERVER_NAME: localhost
+      ELASTICSEARCH_URL: http://elasticsearch:9200/
+    ulimits:
+      nproc: 65535
+      memlock:
+        soft: -1
+        hard: -1
+    cap_add:
+      - ALL
+
+
+  influxdb:
+    container_name: influxdb
+    image: 'influxdb:latest'
+    ports:
+      - '127.0.0.1:8086:8086'
+    volumes:
+      - influxdb-storage:/var/lib/influxdb
+    environment:
+      - INFLUXDB_DB=db0
+      - INFLUXDB_ADMIN_USER=${INFLUXDB_USERNAME}
+      - INFLUXDB_ADMIN_PASSWORD=${INFLUXDB_PASSWORD}
+    networks:
+      simplenet:
+        ipv4_address: 172.25.0.3
+
+  chronograf:
+    image: 'chronograf:latest'
+    ports:
+      - '127.0.0.1:8888:8888'
+    volumes:
+      - chronograf-storage:/var/lib/chronograf
+    depends_on:
+      - influxdb
+    environment:
+      - INFLUXDB_URL=http://influxdb:8086
+      - INFLUXDB_USERNAME=${INFLUXDB_USERNAME}
+      - INFLUXDB_PASSWORD=${INFLUXDB_PASSWORD}
+    networks:
+      simplenet:
+        ipv4_address: 172.25.0.4
+
+
+
+
+
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - '3000:3000'
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./grafana-provisioning/:/etc/grafana/provisioning
+    depends_on:
+      - influxdb
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USERNAME}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}

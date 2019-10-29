@@ -1,0 +1,5 @@
+elasticsearch:
+  url: 'http://elasticsearch:9200'
+
+influxdb:
+  url: 'http://influxdb:9200'
