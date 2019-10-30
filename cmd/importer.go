@@ -1,7 +1,12 @@
 package main
 
-import "fmt"
+import (
+	"github.com/mdaliyan/excel-importer/src/lib/database"
+)
 
 func main() {
-	fmt.Println("Hello World")
+
+	database.ConnectToElastic()
+	database.ConnectToInfluxDB()
+
 }
