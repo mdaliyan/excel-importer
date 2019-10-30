@@ -17,6 +17,7 @@ volumes:
   influxdb-storage:
   chronograf-storage:
   grafana-storage:
+  go-modules:
 
 
 services:
@@ -24,6 +25,9 @@ services:
   importer:
     container_name: importer
     image: importer
+    volumes:
+      - .:/app
+      - go-modules:/go/pkg/mod # Put modules cache into a separate volume
     build:
       context: .
       dockerfile: ./Dockerfile

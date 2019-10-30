@@ -4,8 +4,6 @@ FROM golang:1.12 as builder
 LABEL maintainer="mohammad alian <md.aliyan@gmail.com>"
 
 # Copy .gitconfig
-#RUN git config --global user.name "Mohammad Alian"
-#RUN git config --global user.email "md.aliyan@gmail.com"
 
 # Set the Current Working Directory inside the container
 WORKDIR /app/
@@ -23,20 +21,18 @@ RUN go mod download
 COPY . .
 
 # Build the Go app
-RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o main ./cmd
+RUN GOOS=linux GOARCH=amd64 go build -o main ./cmd
 
 ######## Start a new stage from scratch #######
 FROM alpine:latest
 
 RUN apk --no-cache add ca-certificates
 
-WORKDIR /app
-
 # Copy the Pre-built binary file from the previous stage
-COPY --from=builder /app/main .
+COPY --from=builder /app/main ./
 
 # Copy the env file for working with binary file
 COPY ./env-docker.yml ./env.yml
 
 # Command to run the executable
-CMD ["./main"]
+#CMD ["/main"]
