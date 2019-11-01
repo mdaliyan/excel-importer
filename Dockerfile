@@ -23,14 +23,16 @@ RUN go mod download
 COPY . .
 
 # Build the Go app
-RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o main ./cmd
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o main ./cmd
 
 ######## Start a new stage from scratch #######
 FROM alpine:latest
 
+RUN apk update
 RUN apk --no-cache add ca-certificates
+#RUN apk add bash
 
-WORKDIR /app
+WORKDIR /app/
 
 # Copy the Pre-built binary file from the previous stage
 COPY --from=builder /app/main .

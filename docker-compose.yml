@@ -27,8 +27,8 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile
-    # ports:
-    #     - 8443:4040
+    ports:
+      - 4041:4040
     depends_on:
       - elasticsearch
       - influxdb
