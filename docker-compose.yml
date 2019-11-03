@@ -12,11 +12,11 @@ networks:
 
 volumes:
   logs-storage:
-  elastic-storage:
-  kibana-storage:
   influxdb-storage:
   chronograf-storage:
   grafana-storage:
+  #  elastic-storage:
+  #  kibana-storage:
 
 
 services:
@@ -28,10 +28,10 @@ services:
       context: .
       dockerfile: ./Dockerfile
     ports:
-      - 4041:4040
-    depends_on:
-      - elasticsearch
-      - influxdb
+      - 4041:4044
+#    depends_on:
+#      - elasticsearch
+#      - influxdb
     logging:
       driver: json-file
       options:
@@ -42,69 +42,11 @@ services:
         ipv4_address: 172.25.0.6
 
 
-  elasticsearch:
-    container_name: elasticsearch
-    image: 'docker.elastic.co/elasticsearch/elasticsearch:7.4.1'
-    ports:
-      - 9200:9200
-      - 9300:9300
-    networks:
-      simplenet:
-        ipv4_address: 172.25.0.5
-    environment:
-      - node.name=elasticsearch
-      - cluster.name=docker-cluster
-      - bootstrap.memory_lock=true
-      - "ES_JAVA_OPTS=-Xms256M -Xmx256M"
-      - http.cors.enabled=true
-      - http.cors.allow-origin=*
-      - network.host=_eth0_
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-      - xpack.monitoring.enabled=false
-      - xpack.watcher.enabled=false
-    ulimits:
-      nproc: 65535
-      memlock:
-        soft: -1
-        hard: -1
-    cap_add:
-      - ALL
-    volumes:
-      - logs-storage:/var/log
-      - elastic-storage:/usr/share/elasticsearch/data
-
-
-
-  kibana:
-    container_name: kibana
-    image: 'docker.elastic.co/kibana/kibana:7.4.1'
-    ports:
-      - 5601:5601
-    networks:
-      simplenet:
-        ipv4_address: 172.25.0.2
-    volumes:
-        - logs-storage:/var/log
-    depends_on:
-      - elasticsearch
-    environment:
-      SERVER_NAME: localhost
-      ELASTICSEARCH_URL: http://elasticsearch:9200/
-    ulimits:
-      nproc: 65535
-      memlock:
-        soft: -1
-        hard: -1
-    cap_add:
-      - ALL
-
-
   influxdb:
     container_name: influxdb
     image: 'influxdb:latest'
     ports:
-      - '127.0.0.1:8086:8086'
+      - 8086:8086
     volumes:
       - influxdb-storage:/var/lib/influxdb
     environment:
@@ -131,11 +73,6 @@ services:
       simplenet:
         ipv4_address: 172.25.0.4
 
-
-
-
-
-
   grafana:
     image: grafana/grafana:latest
     ports:
@@ -148,3 +85,68 @@ services:
     environment:
       - GF_SECURITY_ADMIN_USER=${GRAFANA_USERNAME}
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+
+
+
+
+
+
+
+
+
+#  elasticsearch:
+#    container_name: elasticsearch
+#    image: 'docker.elastic.co/elasticsearch/elasticsearch:7.4.1'
+#    ports:
+#      - 9200:9200
+#      - 9300:9300
+#    networks:
+#      simplenet:
+#        ipv4_address: 172.25.0.5
+#    environment:
+#      - node.name=elasticsearch
+#      - cluster.name=docker-cluster
+#      - bootstrap.memory_lock=true
+#      - "ES_JAVA_OPTS=-Xms256M -Xmx256M"
+#      - http.cors.enabled=true
+#      - http.cors.allow-origin=*
+#      - network.host=_eth0_
+#      - discovery.type=single-node
+#      - xpack.security.enabled=false
+#      - xpack.monitoring.enabled=false
+#      - xpack.watcher.enabled=false
+#    ulimits:
+#      nproc: 65535
+#      memlock:
+#        soft: -1
+#        hard: -1
+#    cap_add:
+#      - ALL
+#    volumes:
+#      - logs-storage:/var/log
+#      - elastic-storage:/usr/share/elasticsearch/data
+#
+#
+#
+#  kibana:
+#    container_name: kibana
+#    image: 'docker.elastic.co/kibana/kibana:7.4.1'
+#    ports:
+#      - 5601:5601
+#    networks:
+#      simplenet:
+#        ipv4_address: 172.25.0.2
+#    volumes:
+#        - logs-storage:/var/log
+#    depends_on:
+#      - elasticsearch
+#    environment:
+#      SERVER_NAME: localhost
+#      ELASTICSEARCH_URL: http://elasticsearch:9200/
+#    ulimits:
+#      nproc: 65535
+#      memlock:
+#        soft: -1
+#        hard: -1
+#    cap_add:
+#      - ALL

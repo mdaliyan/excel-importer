@@ -1,5 +1,5 @@
-elasticsearch:
-  url: 'http://elasticsearch:9200'
+#elasticsearch:
+#  url: 'http://elasticsearch:9200'
 
 influxdb:
-  url: 'http://influxdb:5601'
+  url: 'http://influxdb:8086'

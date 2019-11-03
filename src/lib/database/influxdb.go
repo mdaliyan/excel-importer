@@ -6,14 +6,13 @@ import (
 	"github.com/mdaliyan/excel-importer/src/app"
 )
 
-var influxClient *influx.Client
+var influxClient influx.Client
 
-func InfluxDClient() (*influx.Client, bool) {
+func InfluxDClient() influx.Client {
 	if influxClient == nil {
-		return nil, false
+		ConnectToInfluxDB()
 	}
-	ConnectToInfluxDB()
-	return influxClient, true
+	return influxClient
 }
 
 func ConnectToInfluxDB() {
@@ -27,11 +26,11 @@ func refreshInfluxDBConnection() (err error) {
 	if influxClient != nil {
 		return
 	}
-	c, err := influx.NewHTTPClient(influx.HTTPConfig{
+	influxClient, err = influx.NewHTTPClient(influx.HTTPConfig{
 		Addr:     app.Config.InfluxDB.Url,
 		Username: app.Config.InfluxDB.User,
 		Password: app.Config.InfluxDB.Pass,
 	})
-	influxClient = &c
+
 	return err
 }

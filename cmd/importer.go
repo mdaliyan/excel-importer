@@ -1,8 +1,8 @@
 package main
 
 import (
-	"context"
-	"fmt"
+	_ "github.com/influxdata/influxdb1-client"
+	client "github.com/influxdata/influxdb1-client/v2"
 	"github.com/labstack/echo/v4"
 	"github.com/mdaliyan/excel-importer/src/lib/database"
 	"net/http"
@@ -10,29 +10,22 @@ import (
 
 func main() {
 
-	database.ConnectToElastic()
 	database.ConnectToInfluxDB()
-
-	fmt.Println("Hello World")
 
 	Router := echo.New()
 
 	Router.GET("/", func(c echo.Context) error {
-		el, ok := database.ElasticSearchClient()
 
-		if !ok {
-			return c.String(http.StatusGone, "elasticsearch is gone")
-		}
+		q := client.NewQuery("SELECT count(value) FROM cpu_load", "mydb", "")
 
-		r, err := el.NodesInfo().Do(context.Background())
-
+		r, err := database.InfluxDClient().Query(q)
 		if err != nil {
-			return c.String(http.StatusGone, "elasticsearch is gone")
+			return c.String(http.StatusNotAcceptable, err.Error())
 		}
 
 		return c.JSONPretty(http.StatusOK, r, "   ")
 	})
 
-	Router.Logger.Fatal(Router.Start(":4040"))
+	Router.Logger.Fatal(Router.Start(":4044"))
 
 }
